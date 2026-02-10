@@ -1,9 +1,6 @@
-//
+
 //  SettingsView.swift
 //  trackit
-//
-//  Created by Nick Glidden on 2/6/26.
-//
 
 import SwiftUI
 import SwiftData
@@ -14,7 +11,6 @@ struct SettingsView: View {
     
     @Bindable var settings: AppSettings
     @State private var editingHabit: Habit?
-    @State private var showingEditHabit = false
     
     private var themeColor: Color {
         Theme.from(string: settings.theme).primaryColor
@@ -30,14 +26,17 @@ struct SettingsView: View {
     
     var body: some View {
         ZStack {
-            // Background matches theme
+            
+            // bg
             backgroundColor
                 .ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 16) {
-                    // Appearance Section
+                    
+                    // appearance Section
                     VStack(alignment: .leading, spacing: 10) {
+                        
                         Text("Appearance")
                             .font(AppFont.from(string: settings.fontName).font(size: 16))
                             .fontWeight(.semibold)
@@ -45,7 +44,8 @@ struct SettingsView: View {
                             .padding(.leading, 16)
                         
                         VStack(spacing: 8) {
-                            // Theme
+                            
+                            // theme
                             Menu {
                                 ForEach(Theme.allCases, id: \.self) { theme in
                                     Button(action: {
@@ -77,7 +77,7 @@ struct SettingsView: View {
                             .background(cardColor)
                             .cornerRadius(settings.roundCorners ? 12 : 0)
                             
-                            // Font
+                            // font family
                             Menu {
                                 ForEach(AppFont.allCases, id: \.self) { font in
                                     Button(action: {
@@ -107,7 +107,7 @@ struct SettingsView: View {
                             .background(cardColor)
                             .cornerRadius(settings.roundCorners ? 12 : 0)
                             
-                            // Show Labels Toggle
+                            // show labels toggle
                             HStack {
                                 Text("Show Labels")
                                     .font(AppFont.from(string: settings.fontName).font(size: 16))
@@ -122,7 +122,7 @@ struct SettingsView: View {
                             .background(cardColor)
                             .cornerRadius(settings.roundCorners ? 12 : 0)
                             
-                            // Haptics Toggle
+                            // haptics toggle
                             HStack {
                                 Text("Haptics")
                                     .font(AppFont.from(string: settings.fontName).font(size: 16))
@@ -137,7 +137,7 @@ struct SettingsView: View {
                             .background(cardColor)
                             .cornerRadius(settings.roundCorners ? 12 : 0)
                             
-                            // Round Corners Toggle
+                            // round corners toggle
                             HStack {
                                 Text("Round Corners")
                                     .font(AppFont.from(string: settings.fontName).font(size: 16))
@@ -152,7 +152,7 @@ struct SettingsView: View {
                             .background(cardColor)
                             .cornerRadius(settings.roundCorners ? 12 : 0)
                             
-                            // Amount Size
+                            // amount size
                             VStack(spacing: 10) {
                                 HStack {
                                     Text("Amount Size")
@@ -174,8 +174,9 @@ struct SettingsView: View {
                         }
                     }
                     
-                    // Habits Section
+                    // habits section
                     VStack(alignment: .leading, spacing: 10) {
+                        
                         Text("Habits")
                             .font(AppFont.from(string: settings.fontName).font(size: 16))
                             .fontWeight(.semibold)
@@ -206,7 +207,6 @@ struct SettingsView: View {
                                         
                                         Button(action: {
                                             editingHabit = habit
-                                            showingEditHabit = true
                                         }) {
                                             Image(systemName: "pencil")
                                                 .font(.system(size: 16))
@@ -231,7 +231,7 @@ struct SettingsView: View {
                         }
                     }
                     
-                    // Version Info
+                    // version info
                     Text("Version 1.2.1")
                         .font(AppFont.from(string: settings.fontName).font(size: 12))
                         .foregroundColor(.white.opacity(0.4))
@@ -244,10 +244,9 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
-        .sheet(isPresented: $showingEditHabit) {
-            if let habit = editingHabit {
-                CreateHabitView(habitToEdit: habit, settings: settings)
-            }
+        .sheet(item: $editingHabit) { habit in
+            CreateHabitView(habitToEdit: habit, settings: settings)
+                .id(habit.id)
         }
     }
     
@@ -256,4 +255,5 @@ struct SettingsView: View {
             modelContext.delete(habit)
         }
     }
+    
 }

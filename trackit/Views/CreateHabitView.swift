@@ -1,9 +1,6 @@
-//
+
 //  CreateHabitView.swift
 //  trackit
-//
-//  Created by Nick Glidden on 2/6/26.
-//
 
 import SwiftUI
 import SwiftData
@@ -18,7 +15,7 @@ struct CreateHabitView: View {
     @State private var name: String
     @State private var targetAmount: Int
     @State private var selectedFrequency: Frequency
-    @State private var selectedDisplayMode: DisplayMode
+    @State private var selectedViewType: ViewType
     
     private var themeColor: Color {
         Theme.from(string: settings.theme).primaryColor
@@ -31,20 +28,23 @@ struct CreateHabitView: View {
         _name = State(initialValue: habitToEdit?.name ?? "")
         _targetAmount = State(initialValue: habitToEdit?.targetAmount ?? 24)
         _selectedFrequency = State(initialValue: habitToEdit?.frequency ?? .daily)
-        _selectedDisplayMode = State(initialValue: habitToEdit?.displayMode ?? .singleMonth)
+        _selectedViewType = State(initialValue: habitToEdit?.viewType ?? .single)
     }
     
     var body: some View {
         NavigationView {
             ZStack {
+                
+                // bg
                 themeColor
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Content
+                    
                     ScrollView {
                         VStack(alignment: .leading, spacing: 24) {
-                            // Name Section
+                            
+                            // habit name
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Name")
                                     .font(AppFont.from(string: settings.fontName).font(size: 14))
@@ -58,7 +58,7 @@ struct CreateHabitView: View {
                                     .foregroundColor(.white)
                             }
                             
-                            // Amount Section
+                            // habit amount
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
                                     Text("Amount")
@@ -79,7 +79,7 @@ struct CreateHabitView: View {
                                 .accentColor(.white)
                             }
                             
-                            // Frequency Section
+                            // habit frequency
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Frequency")
                                     .font(AppFont.from(string: settings.fontName).font(size: 14))
@@ -89,6 +89,8 @@ struct CreateHabitView: View {
                                     ForEach(Frequency.allCases, id: \.self) { frequency in
                                         Button(action: {
                                             selectedFrequency = frequency
+                                            // Reset view type when frequency changes
+                                            selectedViewType = .single
                                         }) {
                                             Text(frequency.displayName)
                                                 .font(AppFont.from(string: settings.fontName).font(size: 14))
@@ -102,31 +104,24 @@ struct CreateHabitView: View {
                                 }
                             }
                             
-                            // Display Section
+                            // habit view type
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Display")
+                                Text("View Type")
                                     .font(AppFont.from(string: settings.fontName).font(size: 14))
                                     .foregroundColor(.white.opacity(0.8))
                                 
                                 VStack(spacing: 8) {
-                                    ForEach(DisplayMode.allCases, id: \.self) { mode in
+                                    ForEach(availableViewTypes(), id: \.self) { viewType in
                                         Button(action: {
-                                            selectedDisplayMode = mode
+                                            selectedViewType = viewType
                                         }) {
-                                            HStack {
-                                                Text(mode.displayName)
-                                                    .font(AppFont.from(string: settings.fontName).font(size: 14))
-                                                
-                                                Spacer()
-                                                
-                                                if selectedDisplayMode == mode {
-                                                    Image(systemName: "checkmark")
-                                                }
-                                            }
-                                            .padding()
-                                            .background(Color.white.opacity(selectedDisplayMode == mode ? 0.3 : 0.15))
-                                            .cornerRadius(settings.roundCorners ? 12 : 0)
-                                            .foregroundColor(.white)
+                                            Text(viewType.displayName)
+                                                .font(AppFont.from(string: settings.fontName).font(size: 14))
+                                                .frame(maxWidth: .infinity)
+                                                .padding(.vertical, 12)
+                                                .background(selectedViewType == viewType ? Color.white : Color.white.opacity(0.2))
+                                                .foregroundColor(selectedViewType == viewType ? themeColor : .white)
+                                                .cornerRadius(settings.roundCorners ? 8 : 0)
                                         }
                                     }
                                 }
@@ -135,8 +130,10 @@ struct CreateHabitView: View {
                         .padding()
                     }
                     
-                    // Bottom Buttons
+                    // action buttons
                     VStack(spacing: 12) {
+                        
+                        // create/update
                         Button(action: createOrUpdateHabit) {
                             Text(habitToEdit == nil ? "Create Habit" : "Update Habit")
                                 .font(AppFont.from(string: settings.fontName).font(size: 16))
@@ -150,6 +147,7 @@ struct CreateHabitView: View {
                         .disabled(name.isEmpty)
                         .opacity(name.isEmpty ? 0.5 : 1.0)
                         
+                        // cancel
                         Button(action: { dismiss() }) {
                             Text("Cancel")
                                 .font(AppFont.from(string: settings.fontName).font(size: 16))
@@ -159,6 +157,7 @@ struct CreateHabitView: View {
                                 .background(Color.white.opacity(0.2))
                                 .cornerRadius(settings.roundCorners ? 12 : 0)
                         }
+                        
                     }
                     .padding()
                     .background(themeColor)
@@ -177,17 +176,22 @@ struct CreateHabitView: View {
             habitToEdit.name = name
             habitToEdit.targetAmount = targetAmount
             habitToEdit.frequency = selectedFrequency
-            habitToEdit.displayMode = selectedDisplayMode
+            habitToEdit.viewType = selectedViewType
         } else {
             let newHabit = Habit(
                 name: name,
                 targetAmount: targetAmount,
                 frequency: selectedFrequency,
-                displayMode: selectedDisplayMode
+                viewType: selectedViewType
             )
             modelContext.insert(newHabit)
         }
         
         dismiss()
     }
+    
+    private func availableViewTypes() -> [ViewType] {
+        ViewType.available(for: selectedFrequency)
+    }
+    
 }

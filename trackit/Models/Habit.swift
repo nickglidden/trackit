@@ -1,9 +1,6 @@
-//
+
 //  Habit.swift
 //  trackit
-//
-//  Created by Nick Glidden on 2/6/26.
-//
 
 import Foundation
 import SwiftData
@@ -15,26 +12,27 @@ final class Habit {
     var name: String
     var targetAmount: Int
     var frequency: Frequency
-    var displayMode: DisplayMode
+    var viewType: ViewType
     var createdAt: Date
     
     @Relationship(deleteRule: .cascade)
     var entries: [HabitEntry]
     
-    init(name: String, targetAmount: Int, frequency: Frequency, displayMode: DisplayMode) {
+    init(name: String, targetAmount: Int, frequency: Frequency, viewType: ViewType = .single) {
         self.id = UUID()
         self.name = name
         self.targetAmount = targetAmount
         self.frequency = frequency
-        self.displayMode = displayMode
+        self.viewType = viewType
         self.createdAt = Date()
         self.entries = []
     }
     
     func getEntry(for date: Date) -> HabitEntry? {
         let calendar = Calendar.current
+        let keyDate = periodStart(for: date)
         return entries.first { entry in
-            calendar.isDate(entry.date, inSameDayAs: date)
+            calendar.isDate(entry.date, inSameDayAs: keyDate)
         }
     }
     
@@ -44,18 +42,41 @@ final class Habit {
     
     func incrementAmount(for date: Date, in context: ModelContext) {
         let calendar = Calendar.current
-        let currentAmount = getCurrentAmount(for: date)
+        let keyDate = periodStart(for: date)
+        let currentAmount = getCurrentAmount(for: keyDate)
         let newAmount = (currentAmount + 1) % (targetAmount + 1)
         
-        if let entry = getEntry(for: date) {
+        if let entry = getEntry(for: keyDate) {
             entry.amount = newAmount
         } else {
-            let newEntry = HabitEntry(date: calendar.startOfDay(for: date), amount: newAmount)
+            let newEntry = HabitEntry(date: calendar.startOfDay(for: keyDate), amount: newAmount)
             entries.append(newEntry)
             context.insert(newEntry)
         }
         
         try? context.save()
+    }
+
+    /// Returns the canonical date used to store/look up entries for this habit.
+    /// - Daily: start of that day
+    /// - Weekly: start of week (Monday)
+    /// - Monthly: start of month
+    /// - Yearly: start of year
+    func periodStart(for date: Date) -> Date {
+        let calendar = Calendar.current
+        switch frequency {
+        case .daily:
+            return calendar.startOfDay(for: date)
+        case .weekly:
+            let weekday = calendar.component(.weekday, from: date)
+            let daysFromMonday = (weekday + 5) % 7
+            let monday = calendar.date(byAdding: .day, value: -daysFromMonday, to: date)!
+            return calendar.startOfDay(for: monday)
+        case .monthly:
+            return calendar.date(from: calendar.dateComponents([.year, .month], from: date))!
+        case .yearly:
+            return calendar.date(from: calendar.dateComponents([.year], from: date))!
+        }
     }
 }
 
@@ -63,20 +84,38 @@ enum Frequency: String, Codable, CaseIterable {
     case daily = "Daily"
     case weekly = "Weekly"
     case monthly = "Monthly"
+    case yearly = "Yearly"
     
     var displayName: String {
         self.rawValue
     }
 }
 
-enum DisplayMode: String, Codable, CaseIterable {
-    case singleMonth = "Single Month"
-    case yearly = "Yearly"
-    case week = "Week"
-    case day = "Day"
+enum ViewType: String, Codable, CaseIterable {
+    case single = "Single"
+    case multipleRow = "Multiple (Row)"
+    case multipleGrid = "Multiple (Grid)"
     
     var displayName: String {
         self.rawValue
+    }
+    
+    /// Which view types are available for a given frequency
+    static func available(for frequency: Frequency) -> [ViewType] {
+        switch frequency {
+        case .daily:
+            // Single day, week of day bars, month grid of days
+            return [.single, .multipleRow, .multipleGrid]
+        case .weekly:
+            // Single week, row of weeks, year grid of weeks
+            return [.single, .multipleRow, .multipleGrid]
+        case .monthly:
+            // Single month, row of months, year grid of months
+            return [.single, .multipleRow, .multipleGrid]
+        case .yearly:
+            // Single year, row of years (no grid — there's no larger grouping)
+            return [.single, .multipleRow]
+        }
     }
 }
 
