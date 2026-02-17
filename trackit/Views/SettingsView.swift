@@ -64,10 +64,13 @@ struct SettingsView: View {
                                 }
                             } label: {
                                 HStack {
-                                    Text(Theme.from(string: settings.theme).rawValue)
+                                    Text("Color Theme")
                                         .font(AppFont.from(string: settings.fontName).font(size: 16))
                                         .foregroundColor(themeColor)
                                     Spacer()
+                                    Text(Theme.from(string: settings.theme).rawValue)
+                                        .font(AppFont.from(string: settings.fontName).font(size: 16))
+                                        .foregroundColor(themeColor.opacity(0.7))
                                     Image(systemName: "chevron.down")
                                         .font(.system(size: 14))
                                         .foregroundColor(themeColor)
@@ -94,10 +97,13 @@ struct SettingsView: View {
                                 }
                             } label: {
                                 HStack {
-                                    Text(settings.fontName)
+                                    Text("Font Family")
                                         .font(AppFont.from(string: settings.fontName).font(size: 16))
                                         .foregroundColor(themeColor)
                                     Spacer()
+                                    Text(settings.fontName)
+                                        .font(AppFont.from(string: settings.fontName).font(size: 16))
+                                        .foregroundColor(themeColor.opacity(0.7))
                                     Image(systemName: "chevron.down")
                                         .font(.system(size: 14))
                                         .foregroundColor(themeColor)
@@ -105,36 +111,6 @@ struct SettingsView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 16)
                             }
-                            .background(cardColor)
-                            .cornerRadius(settings.roundCorners ? 12 : 0)
-                            
-                            // show labels toggle
-                            HStack {
-                                Text("Show Labels")
-                                    .font(AppFont.from(string: settings.fontName).font(size: 16))
-                                    .foregroundColor(themeColor)
-                                Spacer()
-                                Toggle("", isOn: $settings.showLabels)
-                                    .labelsHidden()
-                                    .tint(themeColor)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 16)
-                            .background(cardColor)
-                            .cornerRadius(settings.roundCorners ? 12 : 0)
-                            
-                            // haptics toggle
-                            HStack {
-                                Text("Haptics")
-                                    .font(AppFont.from(string: settings.fontName).font(size: 16))
-                                    .foregroundColor(themeColor)
-                                Spacer()
-                                Toggle("", isOn: $settings.hapticsEnabled)
-                                    .labelsHidden()
-                                    .tint(themeColor)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 16)
                             .background(cardColor)
                             .cornerRadius(settings.roundCorners ? 12 : 0)
                             
@@ -152,21 +128,62 @@ struct SettingsView: View {
                             .padding(.vertical, 16)
                             .background(cardColor)
                             .cornerRadius(settings.roundCorners ? 12 : 0)
+                        }
+                    }
+                    
+                    // behavior section
+                    VStack(alignment: .leading, spacing: 10) {
+                        
+                        Text("Behavior")
+                            .font(AppFont.from(string: settings.fontName).font(size: 16))
+                            .fontWeight(.semibold)
+                            .foregroundColor(themeColor)
+                            .padding(.leading, 16)
+                        
+                        VStack(spacing: 8) {
                             
-                            // amount size
+                            // haptics toggle
+                            HStack {
+                                Text("Haptic Feedback")
+                                    .font(AppFont.from(string: settings.fontName).font(size: 16))
+                                    .foregroundColor(themeColor)
+                                Spacer()
+                                Toggle("", isOn: $settings.hapticsEnabled)
+                                    .labelsHidden()
+                                    .tint(themeColor)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 16)
+                            .background(cardColor)
+                            .cornerRadius(settings.roundCorners ? 12 : 0)
+                            
+                            // number of periods
                             VStack(spacing: 10) {
                                 HStack {
-                                    Text("Amount Size")
+                                    Text("History View Depth")
                                         .font(AppFont.from(string: settings.fontName).font(size: 16))
                                         .foregroundColor(themeColor)
                                     Spacer()
-                                    Text(String(format: "%.0fpx", settings.amountSize))
+                                    Text("\(settings.numberOfPeriods) periods")
                                         .font(AppFont.from(string: settings.fontName).font(size: 16))
                                         .foregroundColor(themeColor.opacity(0.7))
                                 }
                                 
-                                Slider(value: $settings.amountSize, in: 3...10, step: 0.5)
+                                HStack(spacing: 12) {
+                                    Text("3")
+                                        .font(AppFont.from(string: settings.fontName).font(size: 12))
+                                        .foregroundColor(themeColor.opacity(0.6))
+                                    
+                                    Slider(value: Binding(
+                                        get: { Double(settings.numberOfPeriods) },
+                                        set: { settings.numberOfPeriods = min(10, max(3, Int($0))) }
+                                    ), in: 3...10, step: 1)
                                     .tint(themeColor)
+                                    
+                                    Text("10")
+                                        .font(AppFont.from(string: settings.fontName).font(size: 12))
+                                        .foregroundColor(themeColor.opacity(0.6))
+                                }
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 16)
@@ -233,18 +250,25 @@ struct SettingsView: View {
                     }
                     
                     // version info
-                    Text("Version 1.2.1")
-                        .font(AppFont.from(string: settings.fontName).font(size: 12))
-                        .foregroundColor(.white.opacity(0.4))
-                        .padding(.top, 40)
-                        .padding(.bottom, 20)
+                    VStack(spacing: 4) {
+                        Text("TrackIt")
+                            .font(AppFont.from(string: settings.fontName).font(size: 14))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text("v\(settings.appVersion) (Build \(settings.buildNumber))")
+                            .font(AppFont.from(string: settings.fontName).font(size: 12))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    .padding(.top, 40)
+                    .padding(.bottom, 20)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
             }
         }
         .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editingHabit) { habit in
             CreateHabitView(habitToEdit: habit, settings: settings)
                 .id(habit.id)

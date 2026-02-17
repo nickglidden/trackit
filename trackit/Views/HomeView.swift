@@ -119,7 +119,7 @@ struct HomeView: View {
                 
             }
             .navigationTitle("Habit Tracker")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SettingsView(settings: resolvedSettings)) {
