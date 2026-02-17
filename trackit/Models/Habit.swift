@@ -102,6 +102,43 @@ enum ViewType: String, Codable, CaseIterable {
         self.rawValue
     }
     
+    /// Context-aware display name based on frequency
+    /// - Daily: Today / This Week / This Month
+    /// - Weekly: This Week / This Month / This Year
+    /// - Monthly: This Month / This Quarter / This Year
+    /// - Yearly: This Year / Last 5 Years
+    func displayName(for frequency: Frequency) -> String {
+        switch (self, frequency) {
+        case (.single, .daily):
+            return "Today"
+        case (.multipleRow, .daily):
+            return "This Week"
+        case (.multipleGrid, .daily):
+            return "This Month"
+            
+        case (.single, .weekly):
+            return "This Week"
+        case (.multipleRow, .weekly):
+            return "This Month"
+        case (.multipleGrid, .weekly):
+            return "This Year"
+            
+        case (.single, .monthly):
+            return "This Month"
+        case (.multipleRow, .monthly):
+            return "This Quarter"
+        case (.multipleGrid, .monthly):
+            return "This Year"
+            
+        case (.single, .yearly):
+            return "This Year"
+        case (.multipleRow, .yearly):
+            return "Last 5 Years"
+        case (.multipleGrid, .yearly):
+            return "This Year"
+        }
+    }
+    
     /// Which view types are available for a given frequency
     static func available(for frequency: Frequency) -> [ViewType] {
         switch frequency {

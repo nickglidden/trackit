@@ -41,25 +41,30 @@ struct HomeView: View {
                 
                 Group {
                     if habits.isEmpty {
-                        ScrollView {
-                            VStack(spacing: 20) {
+                        VStack(spacing: 0) {
+                            Spacer()
+                            
+                            VStack(spacing: 24) {
                                 Image(systemName: "chart.bar.fill")
-                                    .font(.system(size: 60))
-                                    .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.5))
-                                    .padding(.top, 60)
+                                    .font(.system(size: 64))
+                                    .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.6))
 
-                                Text("No Habits Yet!")
-                                    .font(AppFont.from(string: resolvedSettings.fontName).font(size: 24))
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor)
+                                VStack(spacing: 12) {
+                                    Text("No Habits Yet")
+                                        .font(AppFont.from(string: resolvedSettings.fontName).font(size: 28))
+                                        .fontWeight(.bold)
+                                        .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor)
 
-                                Text("Tap the + button to create your first habit")
-                                    .font(AppFont.from(string: resolvedSettings.fontName).font(size: 16))
-                                    .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.7))
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal)
+                                    Text("Start building better habits today.\nTap the + button to create your first habit.")
+                                        .font(AppFont.from(string: resolvedSettings.fontName).font(size: 16))
+                                        .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.7))
+                                        .multilineTextAlignment(.center)
+                                        .lineSpacing(2)
+                                }
                             }
-                            .padding()
+                            .padding(.horizontal, 32)
+                            
+                            Spacer()
                         }
                     } else {
                         List {
@@ -116,9 +121,6 @@ struct HomeView: View {
             .navigationTitle("Habit Tracker")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    EditButton()
-                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SettingsView(settings: resolvedSettings)) {
                         Image(systemName: "gear")

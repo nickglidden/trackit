@@ -20,10 +20,16 @@ struct HabitCardView: View {
         VStack(alignment: .leading, spacing: 10) {
             // Header sits ABOVE the card
             HStack(alignment: .firstTextBaseline) {
-                Text(habit.name)
-                    .font(AppFont.from(string: settings.fontName).font(size: 18))
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(habit.name)
+                        .font(AppFont.from(string: settings.fontName).font(size: 18))
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                    
+                    Text(periodLabel)
+                        .font(AppFont.from(string: settings.fontName).font(size: 12))
+                        .foregroundColor(.white.opacity(0.6))
+                }
 
                 Spacer()
 
@@ -90,6 +96,40 @@ struct HabitCardView: View {
         case .monthly: return "a month"
         case .yearly: return "a year"
         }
+    }
+    
+    private var periodLabel: String {
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+        
+        switch habit.frequency {
+        case .daily:
+            formatter.dateFormat = "EEEE, MMM d"
+            return "Today • \(formatter.string(from: currentDate))"
+            
+        case .weekly:
+            let weekStart = weekStartDate()
+            let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart)!
+            formatter.dateFormat = "MMM d"
+            let startStr = formatter.string(from: weekStart)
+            let endStr = formatter.string(from: weekEnd)
+            return "This week • \(startStr) – \(endStr)"
+            
+        case .monthly:
+            formatter.dateFormat = "MMMM yyyy"
+            return "This month • \(formatter.string(from: currentDate))"
+            
+        case .yearly:
+            formatter.dateFormat = "yyyy"
+            return "This year • \(formatter.string(from: currentDate))"
+        }
+    }
+    
+    private func weekStartDate() -> Date {
+        let calendar = Calendar.current
+        let weekday = calendar.component(.weekday, from: currentDate)
+        let daysFromMonday = (weekday + 5) % 7
+        return calendar.date(byAdding: .day, value: -daysFromMonday, to: currentDate)!
     }
 
     private var currentPeriodAmount: Int {

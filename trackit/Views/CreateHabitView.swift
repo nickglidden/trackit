@@ -59,27 +59,52 @@ struct CreateHabitView: View {
                                     .background(Color.white.opacity(0.2))
                                     .cornerRadius(settings.roundCorners ? 12 : 0)
                                     .foregroundColor(.white)
+                                    .accentColor(.white)
                             }
                             
                             // habit amount
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("Amount")
-                                        .font(AppFont.from(string: settings.fontName).font(size: 14))
-                                        .foregroundColor(.white.opacity(0.8))
+                                Text("Amount (Target per Period)")
+                                    .font(AppFont.from(string: settings.fontName).font(size: 14))
+                                    .foregroundColor(.white.opacity(0.8))
+                                
+                                HStack(spacing: 16) {
+                                    Button(action: {
+                                        if targetAmount > 1 {
+                                            targetAmount -= 1
+                                        }
+                                    }) {
+                                        Image(systemName: "minus.circle.fill")
+                                            .font(.system(size: 32))
+                                            .foregroundColor(.white.opacity(0.7))
+                                    }
                                     
                                     Spacer()
                                     
-                                    Text("\(targetAmount)")
-                                        .font(AppFont.from(string: settings.fontName).font(size: 20))
-                                        .foregroundColor(.white)
+                                    VStack(spacing: 4) {
+                                        Text("\(targetAmount)")
+                                            .font(AppFont.from(string: settings.fontName).font(size: 28))
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.white)
+                                        
+                                        Text("per period")
+                                            .font(AppFont.from(string: settings.fontName).font(size: 12))
+                                            .foregroundColor(.white.opacity(0.6))
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        if targetAmount < 1000 {
+                                            targetAmount += 1
+                                        }
+                                    }) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 32))
+                                            .foregroundColor(.white.opacity(0.7))
+                                    }
                                 }
-                                
-                                Slider(value: Binding(
-                                    get: { Double(targetAmount) },
-                                    set: { targetAmount = Int($0) }
-                                ), in: 1...100, step: 1)
-                                .accentColor(.white)
+                                .padding(.vertical, 12)
                             }
                             
                             // habit frequency
@@ -118,7 +143,7 @@ struct CreateHabitView: View {
                                         Button(action: {
                                             selectedViewType = viewType
                                         }) {
-                                            Text(viewType.displayName)
+                                            Text(viewType.displayName(for: selectedFrequency))
                                                 .font(AppFont.from(string: settings.fontName).font(size: 14))
                                                 .frame(maxWidth: .infinity)
                                                 .padding(.vertical, 12)
