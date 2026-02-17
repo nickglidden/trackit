@@ -17,64 +17,65 @@ struct HabitCardView: View {
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Header sits ABOVE the card
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(habit.name)
-                            .font(AppFont.from(string: settings.fontName).font(size: 18))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                        
-                        Text(periodLabel)
-                            .font(AppFont.from(string: settings.fontName).font(size: 12))
-                            .foregroundColor(.white.opacity(0.6))
-                    }
-
-                    Spacer()
-
-                    Text(progressText)
-                        .font(AppFont.from(string: settings.fontName).font(size: 18))
+        VStack(alignment: .leading, spacing: 6) {
+            // Compact header row
+            HStack(alignment: .center, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(habit.name)
+                        .font(AppFont.from(string: settings.fontName).font(size: 16))
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
-                        .monospacedDigit()
+                        .lineLimit(1)
                 }
+
+                Spacer()
+
+                Text(progressText)
+                    .font(AppFont.from(string: settings.fontName).font(size: 16))
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .monospacedDigit()
+            }
+            
+            // Metadata row (date + optional streak/completion)
+            HStack(alignment: .center, spacing: 8) {
+                Text(periodLabel)
+                    .font(AppFont.from(string: settings.fontName).font(size: 11))
+                    .foregroundColor(.white.opacity(0.6))
+                    .lineLimit(1)
                 
-                // Show streak and/or completion percentage if enabled
-                if settings.showStreaks || settings.showCompletionPercentage {
-                    HStack(spacing: 16) {
-                        if settings.showStreaks {
-                            HStack(spacing: 4) {
-                                Image(systemName: "flame.fill")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.orange)
-                                Text("\(habit.calculateStreak(for: currentDate)) day streak")
-                                    .font(AppFont.from(string: settings.fontName).font(size: 12))
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
+                Spacer(minLength: 0)
+                
+                // Inline streak/completion indicators
+                HStack(spacing: 12) {
+                    if settings.showStreaks {
+                        HStack(spacing: 2) {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.orange)
+                            Text("\(habit.calculateStreak(for: currentDate))")
+                                .font(AppFont.from(string: settings.fontName).font(size: 11))
+                                .foregroundColor(.white.opacity(0.7))
                         }
-                        
-                        if settings.showCompletionPercentage {
-                            HStack(spacing: 4) {
-                                Image(systemName: "percent")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.green)
-                                Text("\(habit.completionPercentage(for: currentDate))%")
-                                    .font(AppFont.from(string: settings.fontName).font(size: 12))
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
+                    }
+                    
+                    if settings.showCompletionPercentage {
+                        HStack(spacing: 2) {
+                            Image(systemName: "percent")
+                                .font(.system(size: 12))
+                                .foregroundColor(.green)
+                            Text("\(habit.completionPercentage(for: currentDate))%")
+                                .font(AppFont.from(string: settings.fontName).font(size: 11))
+                                .foregroundColor(.white.opacity(0.7))
                         }
-                        
-                        Spacer()
                     }
                 }
             }
 
-            // Card is ONLY the graphic
+            // Card graphic
             cardGraphic
                 .padding(contentInset)
-                .frame(height: 150)
+                .frame(height: 120)
                 .frame(maxWidth: .infinity)
                 .background(Theme.from(string: settings.theme).primaryColor)
                 .clipShape(

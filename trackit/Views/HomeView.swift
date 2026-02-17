@@ -40,16 +40,15 @@ struct HomeView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Date banner at top
+                    // Date banner at top - right aligned
                     HStack {
-                        Text(formattedTodayString())
-                            .font(AppFont.from(string: resolvedSettings.fontName).font(size: 14))
-                            .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.7))
                         Spacer()
+                        Text(formattedTodayString())
+                            .font(AppFont.from(string: resolvedSettings.fontName).font(size: 13))
+                            .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.6))
                     }
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.1))
+                    .padding(.vertical, 10)
                 
                     Group {
                     if habits.isEmpty {
@@ -201,7 +200,7 @@ struct HomeView: View {
     
     private func formattedTodayString() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMMM d, yyyy"
+        formatter.dateFormat = "EEEE, MMMM d"
         return formatter.string(from: Date())
     }
 }
