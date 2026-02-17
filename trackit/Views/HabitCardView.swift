@@ -14,8 +14,10 @@ struct HabitCardView: View {
 
     @State private var displayDate = Date()
     @State private var dragOffset: CGFloat = 0
-    @State private var isSwipingToNavigate = false
-    @State private var lastHapticTime: Date = Date()
+    @State private var isDragging = false
+    @State private var dragStartLocation: CGFloat = 0
+    @State private var accumulatedOffset: CGFloat = 0
+    @State private var lastNavigationTime: Date = Date.distantPast
     
     @Environment(\.modelContext) private var modelContext
 
@@ -43,84 +45,82 @@ struct HabitCardView: View {
                     )
                 )
                 .onTapGesture {
-                    if !isSwipingToNavigate {
+                    if !isDragging {
                         incrementHabit()
                     }
                 }
+                .opacity(isDragging ? 0.8 : 1.0)
+                .scaleEffect(isDragging ? 0.98 : 1.0)
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            handleDragChanged(value)
+                        }
+                        .onEnded { value in
+                            handleDragEnded()
+                        }
+                )
             
             // Period navigation footer
             periodNavigationFooter
         }
-        .gesture(
-            LongPressGesture(minimumDuration: 0.5)
-                .onEnded { _ in
-                    isSwipingToNavigate = true
-                }
-                .simultaneously(with:
-                    DragGesture()
-                        .onChanged { value in
-                            if isSwipingToNavigate {
-                                dragOffset = value.translation.width
-                                handleSwipeNavigation(translation: value.translation.width)
-                            }
-                        }
-                        .onEnded { _ in
-                            isSwipingToNavigate = false
-                            dragOffset = 0
-                        }
-                )
-        )
     }
 
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
+            // Row 1: Habit name and progress
             HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(habit.name)
-                        .font(AppFont.from(string: settings.fontName).font(size: 22))
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    
-                    Text(periodLabel)
-                        .font(AppFont.from(string: settings.fontName).font(size: 13))
-                        .foregroundColor(.white.opacity(0.6))
-                }
+                Text(habit.name)
+                    .font(AppFont.from(string: settings.fontName).font(size: 24))
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
 
                 Spacer()
 
                 Text(progressText)
-                    .font(AppFont.from(string: settings.fontName).font(size: 22))
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .font(AppFont.from(string: settings.fontName).font(size: 28))
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
                     .monospacedDigit()
             }
             
-            // Show streak, completion %, and other stats
-            if settings.showStreaks || settings.showCompletionPercentage {
-                HStack(spacing: 20) {
-                    if settings.showStreaks {
-                        HStack(spacing: 4) {
-                            Image(systemName: "droplet.fill")
-                                .font(.system(size: 12))
-                                .foregroundColor(.cyan)
-                            Text("\(habit.calculateStreak(for: displayDate))")
-                                .font(AppFont.from(string: settings.fontName).font(size: 13))
-                                .foregroundColor(.white.opacity(0.8))
-                                .monospacedDigit()
+            // Row 2: Period label on left, stats on right
+            HStack(alignment: .center) {
+                Text(periodLabel)
+                    .font(AppFont.from(string: settings.fontName).font(size: 13))
+                    .foregroundColor(.primary.opacity(0.6))
+                
+                Spacer()
+                
+                // Show streak, completion %, and other stats
+                if settings.showStreaks || settings.showCompletionPercentage {
+                    HStack(spacing: 12) {
+                        if settings.showStreaks {
+                            HStack(spacing: 4) {
+                                Image(systemName: "flame.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                                Text("\(habit.calculateStreak(for: displayDate))")
+                                    .font(AppFont.from(string: settings.fontName).font(size: 14))
+                                    .fontWeight(.medium)
+                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                                    .monospacedDigit()
+                            }
                         }
-                    }
-                    
-                    if settings.showCompletionPercentage {
-                        HStack(spacing: 4) {
-                            Image(systemName: "droplet.fill")
-                                .font(.system(size: 12))
-                                .foregroundColor(.cyan)
-                            Text("\(habit.completionPercentage(for: displayDate))%")
-                                .font(AppFont.from(string: settings.fontName).font(size: 13))
-                                .foregroundColor(.white.opacity(0.8))
-                                .monospacedDigit()
+                        
+                        if settings.showCompletionPercentage {
+                            HStack(spacing: 4) {
+                                Image(systemName: "drop.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                                Text("\(habit.completionPercentage(for: displayDate))%")
+                                    .font(AppFont.from(string: settings.fontName).font(size: 14))
+                                    .fontWeight(.medium)
+                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                                    .monospacedDigit()
+                            }
                         }
                     }
                 }
@@ -131,42 +131,45 @@ struct HabitCardView: View {
     // MARK: - Period Navigation Footer
     
     private var periodNavigationFooter: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 8) {
             // Prev button
             Button(action: goToPreviousPeriod) {
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                     Text("Prev")
-                        .font(AppFont.from(string: settings.fontName).font(size: 14))
+                        .font(AppFont.from(string: settings.fontName).font(size: 13))
+                        .fontWeight(.medium)
                 }
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Theme.from(string: settings.theme).primaryColor.opacity(0.6))
             }
+            .buttonStyle(.plain)
             
             Spacer()
             
             // Center: Period indicator dots or Jump to Today
             if isViewingToday {
                 HStack(spacing: 6) {
-                    ForEach(0..<periodIndicatorCount, id: \.self) { index in
+                    ForEach(0..<7, id: \.self) { index in
                         Circle()
-                            .fill(index == currentPeriodIndex ? .white : .white.opacity(0.3))
+                            .fill(index == 3 ? Theme.from(string: settings.theme).primaryColor : Theme.from(string: settings.theme).primaryColor.opacity(0.3))
                             .frame(width: 6, height: 6)
                     }
                 }
+                .transition(.opacity)
             } else {
                 Button(action: jumpToToday) {
-                    HStack(spacing: 4) {
-                        Text("Jump to Today")
-                            .font(AppFont.from(string: settings.fontName).font(size: 13))
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(.white.opacity(0.8))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.15))
-                    .cornerRadius(settings.roundCorners ? 8 : 0)
+                    Text("Jump to Today")
+                        .font(AppFont.from(string: settings.fontName).font(size: 13))
+                        .fontWeight(.semibold)
+                        .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Theme.from(string: settings.theme).primaryColor.opacity(0.15))
+                        .cornerRadius(settings.roundCorners ? 12 : 4)
                 }
+                .buttonStyle(.plain)
+                .transition(.opacity.combined(with: .scale))
             }
             
             Spacer()
@@ -175,15 +178,17 @@ struct HabitCardView: View {
             Button(action: goToNextPeriod) {
                 HStack(spacing: 4) {
                     Text("Next")
-                        .font(AppFont.from(string: settings.fontName).font(size: 14))
+                        .font(AppFont.from(string: settings.fontName).font(size: 13))
+                        .fontWeight(.medium)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                 }
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Theme.from(string: settings.theme).primaryColor.opacity(0.6))
             }
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 4)
-        .padding(.top, 4)
+        .padding(.horizontal, 8)
+        .padding(.top, 8)
     }
 
     // MARK: - Card Graphic
@@ -313,7 +318,7 @@ struct HabitCardView: View {
     // MARK: - Navigation Actions
     
     private func goToPreviousPeriod() {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.easeInOut(duration: 0.3)) {
             switch habit.frequency {
             case .daily:
                 displayDate = Calendar.current.date(byAdding: .day, value: -1, to: displayDate)!
@@ -324,12 +329,12 @@ struct HabitCardView: View {
             case .yearly:
                 displayDate = Calendar.current.date(byAdding: .year, value: -1, to: displayDate)!
             }
-            triggerHaptic()
+            triggerHaptic(.light)
         }
     }
     
     private func goToNextPeriod() {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.easeInOut(duration: 0.3)) {
             switch habit.frequency {
             case .daily:
                 displayDate = Calendar.current.date(byAdding: .day, value: 1, to: displayDate)!
@@ -340,45 +345,85 @@ struct HabitCardView: View {
             case .yearly:
                 displayDate = Calendar.current.date(byAdding: .year, value: 1, to: displayDate)!
             }
-            triggerHaptic()
+            triggerHaptic(.light)
         }
     }
     
     private func jumpToToday() {
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             displayDate = Date()
         }
-        triggerHaptic()
+        triggerHaptic(.medium)
     }
     
-    private func handleSwipeNavigation(translation: CGFloat) {
-        // Threshold for period advancement
-        let threshold: CGFloat = 40
-        let now = Date()
+    // MARK: - Gesture Handling
+    
+    private func handleDragChanged(_ value: DragGesture.Value) {
+        let translation = value.translation.width
         
-        // Only trigger haptic every 100ms to avoid overwhelming haptics
-        if now.timeIntervalSince(lastHapticTime) > 0.1 {
-            let percentThreshold = abs(translation) / threshold
+        // Only start drag navigation if we've moved a certain distance
+        // This allows taps to still work
+        if !isDragging && abs(translation) > 20 {
+            isDragging = true
+            accumulatedOffset = 0
+            dragStartLocation = value.location.x
+            triggerHaptic(.medium)
+        }
+        
+        // Handle continuous drag navigation
+        if isDragging {
+            let currentOffset = translation
+            let deltaOffset = currentOffset - accumulatedOffset
             
-            if percentThreshold > 1.0 {
-                triggerHaptic()
-                lastHapticTime = now
+            // Calculate speed based on distance from start
+            let distanceFromStart = abs(value.location.x - dragStartLocation)
+            
+            // Progressive speed: starts slow, gets faster the further you drag
+            // Base threshold is 120 points per period, scales down as you drag further
+            let baseThreshold: CGFloat = 120
+            let speedMultiplier = min(1.0 + (distanceFromStart / 250), 2.5) // Max 2.5x speed
+            let adjustedThreshold = baseThreshold / speedMultiplier
+            
+            // Check if we should navigate to next/prev period
+            if abs(deltaOffset) >= adjustedThreshold {
+                let now = Date()
+                // Minimum time between navigations based on speed
+                // Slower at first, faster as you keep swiping
+                let minInterval = max(0.08, 0.20 / speedMultiplier)
                 
-                // Determine swipe direction and advance period(s)
-                if translation < -threshold {
-                    // Swiped left (towards future/next)
-                    goToNextPeriod()
-                } else if translation > threshold {
-                    // Swiped right (towards past/previous)
-                    goToPreviousPeriod()
+                if now.timeIntervalSince(lastNavigationTime) >= minInterval {
+                    if deltaOffset < 0 {
+                        // Swipe left -> next period (forward in time)
+                        goToNextPeriod()
+                    } else {
+                        // Swipe right -> previous period (back in time)
+                        goToPreviousPeriod()
+                    }
+                    
+                    accumulatedOffset = currentOffset
+                    lastNavigationTime = now
                 }
             }
         }
     }
     
-    private func triggerHaptic() {
+    private func handleDragEnded() {
+        if isDragging {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isDragging = false
+            }
+            dragOffset = 0
+            accumulatedOffset = 0
+            // Small delay before allowing tap again
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                // Reset complete
+            }
+        }
+    }
+    
+    private func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
         if settings.hapticsEnabled {
-            let impact = UIImpactFeedbackGenerator(style: .light)
+            let impact = UIImpactFeedbackGenerator(style: style)
             impact.impactOccurred()
         }
     }
@@ -387,10 +432,7 @@ struct HabitCardView: View {
         // Only allow incrementing if viewing today
         guard isViewingToday else { return }
         
-        if settings.hapticsEnabled {
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
-        }
+        triggerHaptic(.medium)
 
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             habit.incrementAmount(for: displayDate, in: modelContext)

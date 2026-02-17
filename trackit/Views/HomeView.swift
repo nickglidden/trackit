@@ -40,15 +40,6 @@ struct HomeView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Date banner at top - right aligned
-                    HStack {
-                        Spacer()
-                        Text(formattedTodayString())
-                            .font(AppFont.from(string: resolvedSettings.fontName).font(size: 13))
-                            .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.6))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
                 
                     Group {
                     if habits.isEmpty {
@@ -129,13 +120,13 @@ struct HomeView: View {
                 }
                 
             }
-            .navigationTitle("Habit Tracker")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SettingsView(settings: resolvedSettings)) {
                         Image(systemName: "gear")
-                            .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor)
+                            .foregroundColor(.primary)
                     }
                 }
             }
