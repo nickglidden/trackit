@@ -13,10 +13,10 @@ struct HabitCardView: View {
     let settings: AppSettings
 
     @State private var displayDate = Date()
-    @State private var dragOffset: CGFloat = 0
+    @State private var isHolding = false
     @State private var isDragging = false
-    @State private var dragStartLocation: CGFloat = 0
-    @State private var accumulatedOffset: CGFloat = 0
+    @State private var dragDirection: CGFloat = 0 // -1 for left, 1 for right, 0 for none
+    @State private var navigationCount = 0
     @State private var lastNavigationTime: Date = Date.distantPast
     
     @Environment(\.modelContext) private var modelContext
@@ -45,21 +45,8 @@ struct HabitCardView: View {
                     )
                 )
                 .onTapGesture {
-                    if !isDragging {
-                        incrementHabit()
-                    }
+                    incrementHabit()
                 }
-                .opacity(isDragging ? 0.8 : 1.0)
-                .scaleEffect(isDragging ? 0.98 : 1.0)
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            handleDragChanged(value)
-                        }
-                        .onEnded { value in
-                            handleDragEnded()
-                        }
-                )
             
             // Period navigation footer
             periodNavigationFooter
@@ -195,6 +182,28 @@ struct HabitCardView: View {
         .frame(height: 36)
         .padding(.horizontal, 8)
         .padding(.top, 8)
+        .contentShape(Rectangle())
+        .opacity(isHolding ? 0.9 : 1.0)
+        .scaleEffect(isHolding ? 0.98 : 1.0)
+        .gesture(
+            LongPressGesture(minimumDuration: 0.3)
+                .onChanged { _ in
+                    if !isHolding {
+                        isHolding = true
+                        navigationCount = 0
+                        triggerHaptic(.medium)
+                    }
+                }
+                .sequenced(before:
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            handleDragChanged(value)
+                        }
+                        .onEnded { _ in
+                            handleDragEnded()
+                        }
+                )
+        )
     }
 
     // MARK: - Card Graphic
@@ -367,63 +376,67 @@ struct HabitCardView: View {
     private func handleDragChanged(_ value: DragGesture.Value) {
         let translation = value.translation.width
         
-        // Only start drag navigation if we've moved a certain distance
-        // This allows taps to still work
-        if !isDragging && abs(translation) > 20 {
+        // Only process if we're holding
+        guard isHolding else { return }
+        
+        // Start dragging once we've moved 30pt in either direction
+        if !isDragging && abs(translation) > 30 {
             isDragging = true
-            accumulatedOffset = 0
-            dragStartLocation = value.location.x
-            triggerHaptic(.medium)
+            lastNavigationTime = Date()
+            navigationCount = 0
         }
         
         // Handle continuous drag navigation
         if isDragging {
-            let currentOffset = translation
-            let deltaOffset = currentOffset - accumulatedOffset
+            // Determine direction: left = next (future), right = previous (past)
+            let currentDirection: CGFloat = translation < 0 ? -1 : (translation > 0 ? 1 : 0)
             
-            // Calculate speed based on distance from start
-            let distanceFromStart = abs(value.location.x - dragStartLocation)
+            // If direction changed, reset counter
+            if currentDirection != dragDirection && currentDirection != 0 {
+                dragDirection = currentDirection
+                navigationCount = 0
+                lastNavigationTime = Date()
+            }
             
-            // Progressive speed: starts slow, gets faster the further you drag
-            // Base threshold is 120 points per period, scales down as you drag further
-            let baseThreshold: CGFloat = 120
-            let speedMultiplier = min(1.0 + (distanceFromStart / 250), 2.5) // Max 2.5x speed
-            let adjustedThreshold = baseThreshold / speedMultiplier
+            // Calculate time interval based on navigation count for progressive speed
+            let now = Date()
+            let interval = calculateNavigationInterval()
             
-            // Check if we should navigate to next/prev period
-            if abs(deltaOffset) >= adjustedThreshold {
-                let now = Date()
-                // Minimum time between navigations based on speed
-                // Slower at first, faster as you keep swiping
-                let minInterval = max(0.08, 0.20 / speedMultiplier)
-                
-                if now.timeIntervalSince(lastNavigationTime) >= minInterval {
-                    if deltaOffset < 0 {
-                        // Swipe left -> next period (forward in time)
-                        goToNextPeriod()
-                    } else {
-                        // Swipe right -> previous period (back in time)
-                        goToPreviousPeriod()
-                    }
-                    
-                    accumulatedOffset = currentOffset
-                    lastNavigationTime = now
+            // Check if enough time has passed to navigate again
+            if now.timeIntervalSince(lastNavigationTime) >= interval {
+                if dragDirection < 0 {
+                    // Dragging left -> next period (forward in time)
+                    goToNextPeriod()
+                } else if dragDirection > 0 {
+                    // Dragging right -> previous period (back in time)
+                    goToPreviousPeriod()
                 }
+                
+                navigationCount += 1
+                lastNavigationTime = now
             }
         }
     }
     
+    private func calculateNavigationInterval() -> TimeInterval {
+        // Progressive speed: starts at 2s, then speeds up
+        // 2s, 2s, 1.5s, 1.5s, 1s, 1s, 1s...
+        switch navigationCount {
+        case 0, 1:
+            return 2.0
+        case 2, 3:
+            return 1.5
+        default:
+            return 1.0
+        }
+    }
+    
     private func handleDragEnded() {
-        if isDragging {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                isDragging = false
-            }
-            dragOffset = 0
-            accumulatedOffset = 0
-            // Small delay before allowing tap again
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                // Reset complete
-            }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            isHolding = false
+            isDragging = false
+            dragDirection = 0
+            navigationCount = 0
         }
     }
     
@@ -435,9 +448,7 @@ struct HabitCardView: View {
     }
 
     private func incrementHabit() {
-        // Only allow incrementing if viewing today
-        guard isViewingToday else { return }
-        
+        // Increment the currently displayed period (not necessarily today)
         triggerHaptic(.medium)
 
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
