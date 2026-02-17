@@ -73,14 +73,16 @@ struct HomeView: View {
                             ForEach(habits) { habit in
                                 HabitCardView(habit: habit, settings: resolvedSettings)
                                     .listRowInsets(EdgeInsets(top: 20, leading: 16, bottom: 10, trailing: 16))
-                                    .listRowSeparator(.automatic)
+                                    .listRowSeparator(habit.id == habits.last?.id ? .hidden : .automatic, edges: .bottom)
+                                    .listRowSeparatorTint(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.2))
                                     .listRowBackground(Color.clear)
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                        Button(role: .destructive) {
+                                        Button {
                                             deleteHabit(habit)
                                         } label: {
                                             Label("Delete", systemImage: "trash")
                                         }
+                                        .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
                                     }
                                     .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                         Button {
@@ -91,6 +93,7 @@ struct HomeView: View {
                                         .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
                                     }
                             }
+                            .onMove(perform: moveHabit)
                         }
                         .listStyle(.plain)
                         .scrollContentBackground(.hidden)
@@ -160,6 +163,17 @@ struct HomeView: View {
         withAnimation {
             modelContext.delete(habit)
         }
+    }
+    
+    private func moveHabit(from source: IndexSet, to destination: Int) {
+        var revisedHabits = habits.map { $0 }
+        revisedHabits.move(fromOffsets: source, toOffset: destination)
+        
+        for (index, habit) in revisedHabits.enumerated() {
+            habit.sortOrder = index
+        }
+        
+        try? modelContext.save()
     }
 
     private func normalizeHabitSortOrderIfNeeded() {
