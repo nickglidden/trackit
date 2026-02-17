@@ -100,7 +100,6 @@ struct HomeView: View {
                                         .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
                                     }
                             }
-                            .onMove(perform: moveHabits)
                         }
                         .listStyle(.plain)
                         .scrollContentBackground(.hidden)
@@ -170,17 +169,6 @@ struct HomeView: View {
         withAnimation {
             modelContext.delete(habit)
         }
-    }
-
-    private func moveHabits(from source: IndexSet, to destination: Int) {
-        var reordered = habits
-        reordered.move(fromOffsets: source, toOffset: destination)
-
-        for (index, habit) in reordered.enumerated() {
-            habit.sortOrder = index
-        }
-
-        try? modelContext.save()
     }
 
     private func normalizeHabitSortOrderIfNeeded() {
