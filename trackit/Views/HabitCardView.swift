@@ -70,14 +70,15 @@ struct HabitCardView: View {
     
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Row 1: Habit name and progress
-            HStack(alignment: .firstTextBaseline) {
+            // Row 1: Habit name and progress (fixed height)
+            HStack(alignment: .center) {
                 Text(habit.name)
                     .font(AppFont.from(string: settings.fontName).font(size: 24))
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
+                    .lineLimit(1)
 
-                Spacer()
+                Spacer(minLength: 8)
 
                 Text(progressText)
                     .font(AppFont.from(string: settings.fontName).font(size: 28))
@@ -85,47 +86,49 @@ struct HabitCardView: View {
                     .foregroundColor(.primary)
                     .monospacedDigit()
             }
+            .frame(height: 32)
             
-            // Row 2: Period label on left, stats on right
-            HStack(alignment: .center) {
+            // Row 2: Period label on left, stats on right (fixed height)
+            HStack(alignment: .center, spacing: 8) {
                 Text(periodLabel)
                     .font(AppFont.from(string: settings.fontName).font(size: 13))
                     .foregroundColor(.primary.opacity(0.6))
+                    .lineLimit(1)
                 
-                Spacer()
+                Spacer(minLength: 8)
                 
                 // Show streak, completion %, and other stats
-                if settings.showStreaks || settings.showCompletionPercentage {
-                    HStack(spacing: 12) {
-                        if settings.showStreaks {
-                            HStack(spacing: 4) {
-                                Image(systemName: "flame.fill")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
-                                Text("\(habit.calculateStreak(for: displayDate))")
-                                    .font(AppFont.from(string: settings.fontName).font(size: 14))
-                                    .fontWeight(.medium)
-                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
-                                    .monospacedDigit()
-                            }
+                HStack(spacing: 12) {
+                    if settings.showStreaks {
+                        HStack(spacing: 4) {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 13))
+                                .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                            Text("\(habit.calculateStreak(for: displayDate))")
+                                .font(AppFont.from(string: settings.fontName).font(size: 14))
+                                .fontWeight(.medium)
+                                .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                                .monospacedDigit()
                         }
-                        
-                        if settings.showCompletionPercentage {
-                            HStack(spacing: 4) {
-                                Image(systemName: "drop.fill")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
-                                Text("\(habit.completionPercentage(for: displayDate))%")
-                                    .font(AppFont.from(string: settings.fontName).font(size: 14))
-                                    .fontWeight(.medium)
-                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
-                                    .monospacedDigit()
-                            }
+                    }
+                    
+                    if settings.showCompletionPercentage {
+                        HStack(spacing: 4) {
+                            Image(systemName: "drop.fill")
+                                .font(.system(size: 13))
+                                .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                            Text("\(habit.completionPercentage(for: displayDate))%")
+                                .font(AppFont.from(string: settings.fontName).font(size: 14))
+                                .fontWeight(.medium)
+                                .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                                .monospacedDigit()
                         }
                     }
                 }
             }
+            .frame(height: 20)
         }
+        .frame(height: 58)
     }
 
     // MARK: - Period Navigation Footer
@@ -156,6 +159,7 @@ struct HabitCardView: View {
                             .frame(width: 6, height: 6)
                     }
                 }
+                .frame(height: 28)
                 .transition(.opacity)
             } else {
                 Button(action: jumpToToday) {
@@ -169,6 +173,7 @@ struct HabitCardView: View {
                         .cornerRadius(settings.roundCorners ? 12 : 4)
                 }
                 .buttonStyle(.plain)
+                .frame(height: 28)
                 .transition(.opacity.combined(with: .scale))
             }
             
@@ -187,6 +192,7 @@ struct HabitCardView: View {
             }
             .buttonStyle(.plain)
         }
+        .frame(height: 36)
         .padding(.horizontal, 8)
         .padding(.top, 8)
     }

@@ -72,8 +72,8 @@ struct HomeView: View {
                         List {
                             ForEach(habits) { habit in
                                 HabitCardView(habit: habit, settings: resolvedSettings)
-                                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 20, leading: 16, bottom: 10, trailing: 16))
+                                    .listRowSeparator(.automatic)
                                     .listRowBackground(Color.clear)
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                         Button(role: .destructive) {
@@ -120,7 +120,7 @@ struct HomeView: View {
                 }
                 
             }
-            .navigationTitle("")
+            .navigationTitle("TrackIt!")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
