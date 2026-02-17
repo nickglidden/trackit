@@ -27,6 +27,29 @@ struct SettingsView: View {
     }
     
     var body: some View {
+        settingsContent
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $editingHabit) { habit in
+                CreateHabitView(habitToEdit: habit, settings: settings)
+                    .id(habit.id)
+            }
+            .alert("Clear All Data?", isPresented: $showingClearDataAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete All", role: .destructive) {
+                    clearAllData()
+                }
+            } message: {
+                Text("This will permanently delete all habits and their history. This cannot be undone.")
+            }
+            .alert("Export Successful", isPresented: $showingExportSuccess) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Your habits have been saved to Files/Downloads folder.")
+            }
+    }
+    
+    private var settingsContent: some View {
         ZStack {
             
             // bg
@@ -386,7 +409,7 @@ struct SettingsView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.white.opacity(0.6))
                         
-                        Text(resolvedSettings.appVersion)
+                        Text("\(settings.appVersion)")
                             .font(AppFont.from(string: settings.fontName).font(size: 12))
                             .foregroundColor(.white.opacity(0.4))
                     }
@@ -397,26 +420,9 @@ struct SettingsView: View {
                 .padding(.top, 8)
             }
         }
-        .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $editingHabit) { habit in
-            CreateHabitView(habitToEdit: habit, settings: settings)
-                .id(habit.id)
-        }
-        .alert("Clear All Data?", isPresented: $showingClearDataAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete All", role: .destructive) {
-                clearAllData()
-            }
-        } message: {
-            Text("This will permanently delete all habits and their history. This cannot be undone.")
-        }
-        .alert("Export Successful", isPresented: $showingExportSuccess) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("Your habits have been saved to Files/Downloads folder.")
-        }
     }
+    
+    // MARK: - Helper Methods
     
     private func deleteHabit(_ habit: Habit) {
         withAnimation {
