@@ -132,21 +132,25 @@ struct MultipleRowCardView: View {
                 let radius: CGFloat = roundCorners ? 10 : 0
 
                 ZStack(alignment: .bottom) {
+                    
+                    // cells background color
                     RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .fill(Color.white.opacity(0.22))
+                        .fill(Color.white.opacity(0.25))
 
-                    // Fill grows bottom → top (no crossfade)
+                    tickMarks
+                        .opacity(0.33)
+
+                    // filled portion
                     RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .fill(isCurrent ? Color.white.opacity(0.9) : Color.white.opacity(0.55))
+                        .fill(isCurrent ? Color.white : Color.white.opacity(0.5))
                         .scaleEffect(x: 1, y: progress, anchor: .bottom)
 
-                    // Step marks (like the single view)
-                    tickMarks
-                        .opacity(0.25)
                 }
                 .overlay(
+                    // highlight the "current" period with a brighter border and subtle glow
+                    // non-current cells have a faint border, current cell has a brighter border + glow
                     RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .stroke(isCurrent ? Color.white.opacity(0.45) : Color.white.opacity(0.15), lineWidth: 2)
+                        .stroke(isCurrent ? Color.white.opacity(0.5) : Color.white.opacity(0.15), lineWidth: isCurrent ? 2 : 1)
                         .shadow(color: isCurrent ? Color.white.opacity(0.25) : Color.clear, radius: 6)
                 )
                 .animation(.spring(response: 0.25, dampingFraction: 0.85), value: progress)

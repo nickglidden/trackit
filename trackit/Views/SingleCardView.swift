@@ -18,26 +18,22 @@ struct SingleCardView: View {
             let radius: CGFloat = settings.roundCorners ? 16 : 0
 
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(Color.white.opacity(0.22))
+
+                // no need for a 'cell background color' since
+                // the single cards 'cell' is the whole card
 
                 tickMarks
-                    .opacity(0.35)
-                    .mask(
-                        HStack(spacing: 0) {
-                            Color.clear.frame(width: filledWidth)
-                            Color.white
-                        }
-                    )
+                    .opacity(0.33)
 
+                // filled portion
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(Color.white.opacity(0.85))
+                    .fill(Color.white)
                     .frame(width: filledWidth)
             }
             .overlay(
+                // highlight the "current" period with a brighter border and subtle glow
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .stroke(Color.white.opacity(0.22), lineWidth: 2)
-                    .shadow(color: Color.white.opacity(0.18), radius: 6)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
             )
         }
     }

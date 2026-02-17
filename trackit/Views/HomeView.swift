@@ -82,57 +82,7 @@ struct HomeView: View {
                             .padding(.bottom, 20)
                         }
                     } else {
-                        List {
-                            ForEach(habits) { habit in
-                                HabitCardView(habit: habit, settings: resolvedSettings)
-                                    .listRowInsets(EdgeInsets(top: 20, leading: 16, bottom: 10, trailing: 16))
-                                    .listRowSeparator(habit.id == habits.last?.id ? .hidden : .automatic, edges: .bottom)
-                                    .listRowSeparatorTint(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.2))
-                                    .listRowBackground(
-                                        Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.08)
-                                    )
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                        Button {
-                                            deleteHabit(habit)
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                        .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
-                                    }
-                                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                        Button {
-                                            editingHabit = habit
-                                        } label: {
-                                            Label("Edit", systemImage: "pencil")
-                                        }
-                                        .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
-                                    }
-                            }
-                            .onMove(perform: moveHabit)
-                            
-                            // MARK: - Version Info (List Footer)
-                            Section {
-                                VStack(spacing: 4) {
-                                    Text("TrackIt")
-                                        .font(AppFont.from(string: resolvedSettings.fontName).font(size: 14))
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.white.opacity(0.6))
-                                    
-                                    Text("v\(resolvedSettings.appVersion) (Build \(resolvedSettings.buildNumber))")
-                                        .font(AppFont.from(string: resolvedSettings.fontName).font(size: 12))
-                                        .foregroundColor(.white.opacity(0.4))
-                                }
-                                .frame(maxWidth: .infinity)
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                            }
-                            .padding(.top, 40)
-                            .padding(.bottom, 20)
-                        }
-                        .listStyle(.plain)
-                        .scrollContentBackground(.hidden)
-                        .background(Color.clear)
+                        habitsList
                     }
                     }
                 }
@@ -182,6 +132,69 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Habits List
+    
+    private var habitsList: some View {
+        List {
+            ForEach(habits) { habit in
+                habitRow(for: habit)
+            }
+            .onMove(perform: moveHabit)
+            
+            versionFooter
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
+    }
+    
+    private func habitRow(for habit: Habit) -> some View {
+        HabitCardView(habit: habit, settings: resolvedSettings)
+            .listRowInsets(EdgeInsets(top: 20, leading: 16, bottom: 10, trailing: 16))
+            .listRowSeparator(habit.id == habits.last?.id ? .hidden : .automatic, edges: .bottom)
+            .listRowSeparatorTint(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.2))
+            .listRowBackground(Color.clear)
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button {
+                    deleteHabit(habit)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
+            }
+            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                Button {
+                    editingHabit = habit
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
+            }
+    }
+    
+    private var versionFooter: some View {
+        Section {
+            VStack(spacing: 4) {
+                Text("TrackIt")
+                    .font(AppFont.from(string: resolvedSettings.fontName).font(size: 14))
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Text("v\(resolvedSettings.appVersion) (Build \(resolvedSettings.buildNumber))")
+                    .font(AppFont.from(string: resolvedSettings.fontName).font(size: 12))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            .frame(maxWidth: .infinity)
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+        }
+        .padding(.top, 40)
+        .padding(.bottom, 20)
+    }
+    
+    // MARK: - Helper Methods
+    
     private func ensureSettingsExists() {
         if let existing = settingsArray.first {
             settings = existing

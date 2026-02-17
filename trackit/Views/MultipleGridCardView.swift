@@ -77,7 +77,12 @@ struct MultipleGridCardView: View {
     // MARK: - Weekly → Year grid (9 columns, 52 weeks)
 
     private func weeklyYearGrid(availableHeight: CGFloat) -> some View {
+        let cal = Calendar.current
+        // Get the start of the year containing currentDate
+        let yearStart = cal.date(from: cal.dateComponents([.year], from: currentDate))!
         let totalWeeks = 52
+        let currentWeekStart = startOfWeek(for: currentDate)
+        
         let cols = 9
         let rows = (totalWeeks + cols - 1) / cols
         let spacing: CGFloat = 4
@@ -89,10 +94,12 @@ struct MultipleGridCardView: View {
                     ForEach(0..<cols, id: \.self) { col in
                         let weekIndex = row * cols + col
                         if weekIndex < totalWeeks {
-                            // weekIndex 0 = current week, 1 = last week, etc.
-                            let weekStart = Calendar.current.date(byAdding: .weekOfYear, value: -weekIndex, to: startOfWeek())!
-                            let amount = habit.getCurrentAmount(for: weekStart)
-                            let isCurrent = weekIndex == 0
+                            // Show weeks in calendar order from start of year
+                            let weekStart = cal.date(byAdding: .weekOfYear, value: weekIndex, to: yearStart)!
+                            let weekStartMonday = startOfWeek(for: weekStart)
+                            let amount = habit.getCurrentAmount(for: weekStartMonday)
+                            // Check if this week contains the currentDate
+                            let isCurrent = cal.isDate(weekStartMonday, equalTo: currentWeekStart, toGranularity: .day)
 
                             ProgressCell(
                                 progress: progress(amount: amount, target: habit.targetAmount),
@@ -114,6 +121,12 @@ struct MultipleGridCardView: View {
     // MARK: - Monthly → Year grid (4 columns, 3 rows = 12 months)
 
     private func monthlyYearGrid(availableHeight: CGFloat) -> some View {
+        let cal = Calendar.current
+        let currentYear = cal.component(.year, from: currentDate)
+        let currentMonth = cal.component(.month, from: currentDate)
+        // Start from January of the current year
+        let yearStart = cal.date(from: DateComponents(year: currentYear, month: 1, day: 1))!
+        
         let cols = 4
         let rows = 3
         let spacing: CGFloat = 4
@@ -123,12 +136,13 @@ struct MultipleGridCardView: View {
             ForEach(0..<rows, id: \.self) { row in
                 HStack(spacing: 4) {
                     ForEach(0..<cols, id: \.self) { col in
-                        let monthOffset = row * cols + col   // 0 = current, 1 = last month, …
-                        let monthDate = Calendar.current.date(byAdding: .month, value: -monthOffset, to: currentDate)!
-                        let mStart = startOfMonth(for: monthDate)
-                        let amount = habit.getCurrentAmount(for: mStart)
+                        let monthIndex = row * cols + col   // 0 = Jan, 1 = Feb, ..., 11 = Dec
+                        // Show months in calendar order (Jan-Dec)
+                        let monthStart = cal.date(byAdding: .month, value: monthIndex, to: yearStart)!
+                        let amount = habit.getCurrentAmount(for: monthStart)
                         let target = habit.targetAmount
-                        let isCurrent = monthOffset == 0
+                        let month = cal.component(.month, from: monthStart)
+                        let isCurrent = month == currentMonth
 
                         ProgressCell(
                             progress: progress(amount: amount, target: target),
@@ -162,27 +176,33 @@ struct MultipleGridCardView: View {
         var body: some View {
             let radius = roundCorners ? cornerRadius : 0
             ZStack(alignment: .bottom) {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(Color.white.opacity(0.18))
 
+                // cells background color
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(Color.white.opacity(0.78))
+                    .fill(Color.white.opacity(0.25))
+
+                // filled portion
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(isCurrent ? Color.white : Color.white.opacity(0.5))
                     .scaleEffect(x: 1, y: progress, anchor: .bottom)
+            
             }
             .overlay(
+                // highlight the "current" period with a brighter border and subtle glow
+                // non-current cells have a faint border, current cell has a brighter border + glow
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .stroke(isCurrent ? Color.white.opacity(0.9) : Color.white.opacity(0.10), lineWidth: isCurrent ? 2 : 1)
+                    .stroke(isCurrent ? Color.white.opacity(0.5) : Color.white.opacity(0.15), lineWidth: isCurrent ? 2 : 1)
                     .shadow(color: isCurrent ? Color.white.opacity(0.25) : Color.clear, radius: 5)
             )
             .animation(.spring(response: 0.25, dampingFraction: 0.85), value: progress)
         }
     }
 
-    private func startOfWeek() -> Date {
+    private func startOfWeek(for date: Date) -> Date {
         let cal = Calendar.current
-        let weekday = cal.component(.weekday, from: currentDate)
+        let weekday = cal.component(.weekday, from: date)
         let daysFromMonday = (weekday + 5) % 7
-        return cal.date(byAdding: .day, value: -daysFromMonday, to: currentDate)!
+        return cal.date(byAdding: .day, value: -daysFromMonday, to: date)!
     }
 
     private func startOfMonth() -> Date {
