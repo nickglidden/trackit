@@ -381,12 +381,12 @@ struct SettingsView: View {
                     
                     // MARK: - Version Info
                     VStack(spacing: 4) {
-                        Text("TrackIt")
+                        Text("TrackIt!")
                             .font(AppFont.from(string: settings.fontName).font(size: 14))
                             .fontWeight(.semibold)
                             .foregroundColor(.white.opacity(0.6))
                         
-                        Text("v\(settings.appVersion) (Build \(settings.buildNumber))")
+                        Text(resolvedSettings.appVersion)
                             .font(AppFont.from(string: settings.fontName).font(size: 12))
                             .foregroundColor(.white.opacity(0.4))
                     }
