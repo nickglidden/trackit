@@ -71,10 +71,13 @@ struct MultipleRowCardView: View {
 
     private func weeklyBars() -> [BarItem] {
         let count = 4  // Show 4 weeks = 1 month
+        let currentWeekStart = startOfWeek(for: currentDate)
+        
         return (0..<count).reversed().map { offset in
-            let weekStart = Calendar.current.date(byAdding: .weekOfYear, value: -offset, to: startOfWeek())!
+            let weekStart = Calendar.current.date(byAdding: .weekOfYear, value: -offset, to: currentWeekStart)!
             let amount = habit.getCurrentAmount(for: weekStart)
-            return BarItem(progress: progress(amount: amount, target: habit.targetAmount), isCurrent: offset == 0)
+            let isCurrent = Calendar.current.isDate(weekStart, equalTo: currentWeekStart, toGranularity: .weekOfYear)
+            return BarItem(progress: progress(amount: amount, target: habit.targetAmount), isCurrent: isCurrent)
         }
     }
 
@@ -82,11 +85,14 @@ struct MultipleRowCardView: View {
 
     private func monthlyBars() -> [BarItem] {
         let count = 3  // Show 3 months = 1 quarter
+        let currentMonthStart = startOfMonth(for: currentDate)
+        
         return (0..<count).reversed().map { offset in
             let monthDate = Calendar.current.date(byAdding: .month, value: -offset, to: currentDate)!
             let monthStart = self.startOfMonth(for: monthDate)
             let amount = habit.getCurrentAmount(for: monthStart)
-            return BarItem(progress: progress(amount: amount, target: habit.targetAmount), isCurrent: offset == 0)
+            let isCurrent = Calendar.current.isDate(monthStart, equalTo: currentMonthStart, toGranularity: .month)
+            return BarItem(progress: progress(amount: amount, target: habit.targetAmount), isCurrent: isCurrent)
         }
     }
 
@@ -94,11 +100,14 @@ struct MultipleRowCardView: View {
 
     private func yearlyBars() -> [BarItem] {
         let count = 5  // Show 5 years
+        let currentYearStart = startOfYear(for: currentDate)
+        
         return (0..<count).reversed().map { offset in
             let yearDate = Calendar.current.date(byAdding: .year, value: -offset, to: currentDate)!
             let yearStart = self.startOfYear(for: yearDate)
             let amount = habit.getCurrentAmount(for: yearStart)
-            return BarItem(progress: progress(amount: amount, target: habit.targetAmount), isCurrent: offset == 0)
+            let isCurrent = Calendar.current.isDate(yearStart, equalTo: currentYearStart, toGranularity: .year)
+            return BarItem(progress: progress(amount: amount, target: habit.targetAmount), isCurrent: isCurrent)
         }
     }
 
@@ -163,11 +172,11 @@ struct MultipleRowCardView: View {
 
     // MARK: - Date helpers
 
-    private func startOfWeek() -> Date {
+    private func startOfWeek(for date: Date) -> Date {
         let cal = Calendar.current
-        let weekday = cal.component(.weekday, from: currentDate)
+        let weekday = cal.component(.weekday, from: date)
         let daysFromMonday = (weekday + 5) % 7
-        return cal.date(byAdding: .day, value: -daysFromMonday, to: currentDate)!
+        return cal.date(byAdding: .day, value: -daysFromMonday, to: date)!
     }
 
     private func startOfMonth(for date: Date) -> Date {

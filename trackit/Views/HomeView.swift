@@ -67,6 +67,19 @@ struct HomeView: View {
                             .padding(.horizontal, 32)
                             
                             Spacer()
+                            
+                            // MARK: - Version Info (Empty State)
+                            VStack(spacing: 4) {
+                                Text("TrackIt")
+                                    .font(AppFont.from(string: resolvedSettings.fontName).font(size: 14))
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white.opacity(0.6))
+                                
+                                Text("v\(resolvedSettings.appVersion) (Build \(resolvedSettings.buildNumber))")
+                                    .font(AppFont.from(string: resolvedSettings.fontName).font(size: 12))
+                                    .foregroundColor(.white.opacity(0.4))
+                            }
+                            .padding(.bottom, 20)
                         }
                     } else {
                         List {
@@ -75,7 +88,9 @@ struct HomeView: View {
                                     .listRowInsets(EdgeInsets(top: 20, leading: 16, bottom: 10, trailing: 16))
                                     .listRowSeparator(habit.id == habits.last?.id ? .hidden : .automatic, edges: .bottom)
                                     .listRowSeparatorTint(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.2))
-                                    .listRowBackground(Color.clear)
+                                    .listRowBackground(
+                                        Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.08)
+                                    )
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                         Button {
                                             deleteHabit(habit)
@@ -94,6 +109,26 @@ struct HomeView: View {
                                     }
                             }
                             .onMove(perform: moveHabit)
+                            
+                            // MARK: - Version Info (List Footer)
+                            Section {
+                                VStack(spacing: 4) {
+                                    Text("TrackIt")
+                                        .font(AppFont.from(string: resolvedSettings.fontName).font(size: 14))
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white.opacity(0.6))
+                                    
+                                    Text("v\(resolvedSettings.appVersion) (Build \(resolvedSettings.buildNumber))")
+                                        .font(AppFont.from(string: resolvedSettings.fontName).font(size: 12))
+                                        .foregroundColor(.white.opacity(0.4))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                            }
+                            .padding(.top, 40)
+                            .padding(.bottom, 20)
                         }
                         .listStyle(.plain)
                         .scrollContentBackground(.hidden)
