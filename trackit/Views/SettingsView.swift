@@ -7,7 +7,8 @@ import SwiftData
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var habits: [Habit]
+    @Query(sort: [SortDescriptor(\Habit.sortOrder, order: .forward), SortDescriptor(\Habit.createdAt, order: .forward)])
+    private var habits: [Habit]
     
     @Bindable var settings: AppSettings
     @State private var editingHabit: Habit?

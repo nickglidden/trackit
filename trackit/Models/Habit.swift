@@ -13,17 +13,19 @@ final class Habit {
     var targetAmount: Int
     var frequency: Frequency
     var viewType: ViewType
+    var sortOrder: Int
     var createdAt: Date
     
     @Relationship(deleteRule: .cascade)
     var entries: [HabitEntry]
     
-    init(name: String, targetAmount: Int, frequency: Frequency, viewType: ViewType = .single) {
+    init(name: String, targetAmount: Int, frequency: Frequency, viewType: ViewType = .single, sortOrder: Int = 0) {
         self.id = UUID()
         self.name = name
         self.targetAmount = targetAmount
         self.frequency = frequency
         self.viewType = viewType
+        self.sortOrder = sortOrder
         self.createdAt = Date()
         self.entries = []
     }

@@ -9,22 +9,26 @@ struct HomeView: View {
     
     @Environment(\.modelContext) private var modelContext
     
-    @Query private var habits: [Habit]
+    @Query(sort: [SortDescriptor(\Habit.sortOrder, order: .forward), SortDescriptor(\Habit.createdAt, order: .forward)])
+    private var habits: [Habit]
     @Query private var settingsArray: [AppSettings]
     
     @State private var showingCreateHabit = false
+    @State private var editingHabit: Habit?
+    @State private var settings: AppSettings?
     
     private var backgroundColor: Color {
-        Theme.from(string: settings.theme).backgroundColor
+        Theme.from(string: resolvedSettings.theme).backgroundColor
     }
     
-    private var settings: AppSettings {
+    private var resolvedSettings: AppSettings {
+        if let settings {
+            return settings
+        }
         if let existing = settingsArray.first {
             return existing
         }
-        let newSettings = AppSettings()
-        modelContext.insert(newSettings)
-        return newSettings
+        return AppSettings()
     }
     
     var body: some View {
@@ -35,33 +39,57 @@ struct HomeView: View {
                 backgroundColor
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        if habits.isEmpty {
+                Group {
+                    if habits.isEmpty {
+                        ScrollView {
                             VStack(spacing: 20) {
                                 Image(systemName: "chart.bar.fill")
                                     .font(.system(size: 60))
-                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor.opacity(0.5))
+                                    .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.5))
                                     .padding(.top, 60)
-                                
+
                                 Text("No Habits Yet!")
-                                    .font(AppFont.from(string: settings.fontName).font(size: 24))
+                                    .font(AppFont.from(string: resolvedSettings.fontName).font(size: 24))
                                     .fontWeight(.semibold)
-                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor)
-                                
+                                    .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor)
+
                                 Text("Tap the + button to create your first habit")
-                                    .font(AppFont.from(string: settings.fontName).font(size: 16))
-                                    .foregroundColor(Theme.from(string: settings.theme).primaryColor.opacity(0.7))
+                                    .font(AppFont.from(string: resolvedSettings.fontName).font(size: 16))
+                                    .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.7))
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal)
                             }
-                        } else {
-                            ForEach(habits) { habit in
-                                HabitCardView(habit: habit, settings: settings)
-                            }
+                            .padding()
                         }
+                    } else {
+                        List {
+                            ForEach(habits) { habit in
+                                HabitCardView(habit: habit, settings: resolvedSettings)
+                                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button(role: .destructive) {
+                                            deleteHabit(habit)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
+                                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                        Button {
+                                            editingHabit = habit
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
+                                    }
+                            }
+                            .onMove(perform: moveHabits)
+                        }
+                        .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
                     }
-                    .padding()
                 }
                 
                 // create habit button (floating)
@@ -76,7 +104,7 @@ struct HomeView: View {
                                 .font(.system(size: 24, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 60, height: 60)
-                                .background(Theme.from(string: settings.theme).primaryColor)
+                                .background(Theme.from(string: resolvedSettings.theme).primaryColor)
                                 .clipShape(Circle())
                                 .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
@@ -88,16 +116,71 @@ struct HomeView: View {
             .navigationTitle("Habit Tracker")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    EditButton()
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: SettingsView(settings: settings)) {
+                    NavigationLink(destination: SettingsView(settings: resolvedSettings)) {
                         Image(systemName: "gear")
-                            .foregroundColor(Theme.from(string: settings.theme).primaryColor)
+                            .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor)
                     }
                 }
             }
             .sheet(isPresented: $showingCreateHabit) {
-                CreateHabitView(settings: settings)
+                CreateHabitView(settings: resolvedSettings)
+            }
+            .sheet(item: $editingHabit) { habit in
+                CreateHabitView(habitToEdit: habit, settings: resolvedSettings)
+                    .id(habit.id)
+            }
+            .task {
+                ensureSettingsExists()
+                normalizeHabitSortOrderIfNeeded()
             }
         }
+    }
+
+    private func ensureSettingsExists() {
+        if let existing = settingsArray.first {
+            settings = existing
+            return
+        }
+        if settings == nil {
+            let newSettings = AppSettings()
+            modelContext.insert(newSettings)
+            settings = newSettings
+        }
+    }
+
+    private func deleteHabit(_ habit: Habit) {
+        withAnimation {
+            modelContext.delete(habit)
+        }
+    }
+
+    private func moveHabits(from source: IndexSet, to destination: Int) {
+        var reordered = habits
+        reordered.move(fromOffsets: source, toOffset: destination)
+
+        for (index, habit) in reordered.enumerated() {
+            habit.sortOrder = index
+        }
+
+        try? modelContext.save()
+    }
+
+    private func normalizeHabitSortOrderIfNeeded() {
+        guard !habits.isEmpty else { return }
+
+        let uniqueOrders = Set(habits.map { $0.sortOrder })
+        let looksUninitialized = uniqueOrders.count == 1
+
+        guard looksUninitialized else { return }
+
+        let byCreatedAt = habits.sorted { $0.createdAt < $1.createdAt }
+        for (index, habit) in byCreatedAt.enumerated() {
+            habit.sortOrder = index
+        }
+        try? modelContext.save()
     }
 }

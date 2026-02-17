@@ -8,6 +8,9 @@ import SwiftData
 struct CreateHabitView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+
+    @Query(sort: [SortDescriptor(\Habit.sortOrder, order: .forward), SortDescriptor(\Habit.createdAt, order: .forward)])
+    private var existingHabits: [Habit]
     
     let habitToEdit: Habit?
     let settings: AppSettings
@@ -178,11 +181,13 @@ struct CreateHabitView: View {
             habitToEdit.frequency = selectedFrequency
             habitToEdit.viewType = selectedViewType
         } else {
+            let nextSortOrder = (existingHabits.map { $0.sortOrder }.max() ?? -1) + 1
             let newHabit = Habit(
                 name: name,
                 targetAmount: targetAmount,
                 frequency: selectedFrequency,
-                viewType: selectedViewType
+                viewType: selectedViewType,
+                sortOrder: nextSortOrder
             )
             modelContext.insert(newHabit)
         }
