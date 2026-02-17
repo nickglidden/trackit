@@ -40,16 +40,6 @@ struct HomeView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Date banner at top
-                    HStack {
-                        Text(formattedTodayString())
-                            .font(AppFont.from(string: resolvedSettings.fontName).font(size: 14))
-                            .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.7))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.1))
                 
                     Group {
                     if habits.isEmpty {
@@ -101,7 +91,6 @@ struct HomeView: View {
                                         .tint(Theme.from(string: resolvedSettings.theme).primaryColor)
                                     }
                             }
-                            .onMove(perform: moveHabits)
                         }
                         .listStyle(.plain)
                         .scrollContentBackground(.hidden)
@@ -131,13 +120,13 @@ struct HomeView: View {
                 }
                 
             }
-            .navigationTitle("Habit Tracker")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SettingsView(settings: resolvedSettings)) {
                         Image(systemName: "gear")
-                            .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor)
+                            .foregroundColor(.primary)
                     }
                 }
             }
@@ -173,17 +162,6 @@ struct HomeView: View {
         }
     }
 
-    private func moveHabits(from source: IndexSet, to destination: Int) {
-        var reordered = habits
-        reordered.move(fromOffsets: source, toOffset: destination)
-
-        for (index, habit) in reordered.enumerated() {
-            habit.sortOrder = index
-        }
-
-        try? modelContext.save()
-    }
-
     private func normalizeHabitSortOrderIfNeeded() {
         guard !habits.isEmpty else { return }
 
@@ -201,7 +179,7 @@ struct HomeView: View {
     
     private func formattedTodayString() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMMM d, yyyy"
+        formatter.dateFormat = "EEEE, MMMM d"
         return formatter.string(from: Date())
     }
 }
