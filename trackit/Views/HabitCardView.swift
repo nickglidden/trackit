@@ -19,25 +19,56 @@ struct HabitCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Header sits ABOVE the card
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(habit.name)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(habit.name)
+                            .font(AppFont.from(string: settings.fontName).font(size: 18))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                        
+                        Text(periodLabel)
+                            .font(AppFont.from(string: settings.fontName).font(size: 12))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+
+                    Spacer()
+
+                    Text(progressText)
                         .font(AppFont.from(string: settings.fontName).font(size: 18))
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
-                    
-                    Text(periodLabel)
-                        .font(AppFont.from(string: settings.fontName).font(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
+                        .monospacedDigit()
                 }
-
-                Spacer()
-
-                Text(progressText)
-                    .font(AppFont.from(string: settings.fontName).font(size: 18))
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .monospacedDigit()
+                
+                // Show streak and/or completion percentage if enabled
+                if settings.showStreaks || settings.showCompletionPercentage {
+                    HStack(spacing: 16) {
+                        if settings.showStreaks {
+                            HStack(spacing: 4) {
+                                Image(systemName: "flame.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.orange)
+                                Text("\(habit.calculateStreak(for: currentDate)) day streak")
+                                    .font(AppFont.from(string: settings.fontName).font(size: 12))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                        
+                        if settings.showCompletionPercentage {
+                            HStack(spacing: 4) {
+                                Image(systemName: "percent")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.green)
+                                Text("\(habit.completionPercentage(for: currentDate))%")
+                                    .font(AppFont.from(string: settings.fontName).font(size: 12))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                }
             }
 
             // Card is ONLY the graphic

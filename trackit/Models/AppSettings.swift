@@ -7,22 +7,39 @@ import SwiftData
 
 @Model
 final class AppSettings {
+    // Appearance
     var theme: String
     var fontName: String
-    var hapticsEnabled: Bool
     var roundCorners: Bool
-    var numberOfPeriods: Int
+    var highContrastMode: Bool
+    
+    // Behavior
+    var hapticsEnabled: Bool
+    var showStreaks: Bool
+    var showCompletionPercentage: Bool
+    var reduceAnimations: Bool
+    
+    // Privacy & Security
+    var appLockEnabled: Bool
     
     init(theme: String = "frostbiteBlue",
          fontName: String = "Courier",
-         hapticsEnabled: Bool = true,
          roundCorners: Bool = true,
-         numberOfPeriods: Int = 4) {
+         highContrastMode: Bool = false,
+         hapticsEnabled: Bool = true,
+         showStreaks: Bool = true,
+         showCompletionPercentage: Bool = true,
+         reduceAnimations: Bool = false,
+         appLockEnabled: Bool = false) {
         self.theme = theme
         self.fontName = fontName
-        self.hapticsEnabled = hapticsEnabled
         self.roundCorners = roundCorners
-        self.numberOfPeriods = min(10, max(3, numberOfPeriods))
+        self.highContrastMode = highContrastMode
+        self.hapticsEnabled = hapticsEnabled
+        self.showStreaks = showStreaks
+        self.showCompletionPercentage = showCompletionPercentage
+        self.reduceAnimations = reduceAnimations
+        self.appLockEnabled = appLockEnabled
     }
     
     /// Gets the app version from the bundle
