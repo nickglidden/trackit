@@ -7,27 +7,54 @@ import SwiftData
 
 @Model
 final class AppSettings {
+    // Appearance
     var theme: String
     var fontName: String
-    var showLabels: Bool
-    var hapticsEnabled: Bool
     var roundCorners: Bool
-    var amountSize: Double
-    var numberOfPeriods: Int
+    var highContrastMode: Bool
+    
+    // Behavior
+    var hapticsEnabled: Bool
+    var showStreaks: Bool
+    var showCompletionPercentage: Bool
+    var reduceAnimations: Bool
+    
+    // Privacy & Security
+    var appLockEnabled: Bool
     
     init(theme: String = "frostbiteBlue",
          fontName: String = "Courier",
-         showLabels: Bool = true,
-         hapticsEnabled: Bool = true,
          roundCorners: Bool = true,
-         amountSize: Double = 5.0,
-         numberOfPeriods: Int = 4) {
+         highContrastMode: Bool = false,
+         hapticsEnabled: Bool = true,
+         showStreaks: Bool = true,
+         showCompletionPercentage: Bool = true,
+         reduceAnimations: Bool = false,
+         appLockEnabled: Bool = false) {
         self.theme = theme
         self.fontName = fontName
-        self.showLabels = showLabels
-        self.hapticsEnabled = hapticsEnabled
         self.roundCorners = roundCorners
-        self.amountSize = amountSize
-        self.numberOfPeriods = min(10, max(3, numberOfPeriods))
+        self.highContrastMode = highContrastMode
+        self.hapticsEnabled = hapticsEnabled
+        self.showStreaks = showStreaks
+        self.showCompletionPercentage = showCompletionPercentage
+        self.reduceAnimations = reduceAnimations
+        self.appLockEnabled = appLockEnabled
+    }
+    
+    /// Gets the app version from the bundle
+    var appVersion: String {
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+            return version
+        }
+        return "1.0.0"
+    }
+    
+    /// Gets the build number from the bundle
+    var buildNumber: String {
+        if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+            return build
+        }
+        return "1"
     }
 }

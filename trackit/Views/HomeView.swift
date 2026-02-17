@@ -39,7 +39,19 @@ struct HomeView: View {
                 backgroundColor
                     .ignoresSafeArea()
                 
-                Group {
+                VStack(spacing: 0) {
+                    // Date banner at top
+                    HStack {
+                        Text(formattedTodayString())
+                            .font(AppFont.from(string: resolvedSettings.fontName).font(size: 14))
+                            .foregroundColor(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.7))
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Theme.from(string: resolvedSettings.theme).primaryColor.opacity(0.1))
+                
+                    Group {
                     if habits.isEmpty {
                         VStack(spacing: 0) {
                             Spacer()
@@ -95,6 +107,7 @@ struct HomeView: View {
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)
                     }
+                    }
                 }
                 
                 // create habit button (floating)
@@ -119,7 +132,7 @@ struct HomeView: View {
                 
             }
             .navigationTitle("Habit Tracker")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SettingsView(settings: resolvedSettings)) {
@@ -184,5 +197,11 @@ struct HomeView: View {
             habit.sortOrder = index
         }
         try? modelContext.save()
+    }
+    
+    private func formattedTodayString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMMM d, yyyy"
+        return formatter.string(from: Date())
     }
 }

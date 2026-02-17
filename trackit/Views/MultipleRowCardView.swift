@@ -67,10 +67,10 @@ struct MultipleRowCardView: View {
         }
     }
 
-    // MARK: - Weekly → N week bars (most recent on the right)
+    // MARK: - Weekly → 4 week bars (most recent on the right - shows 1 month)
 
     private func weeklyBars() -> [BarItem] {
-        let count = settings.numberOfPeriods
+        let count = 4  // Show 4 weeks = 1 month
         return (0..<count).reversed().map { offset in
             let weekStart = Calendar.current.date(byAdding: .weekOfYear, value: -offset, to: startOfWeek())!
             let amount = habit.getCurrentAmount(for: weekStart)
@@ -78,10 +78,10 @@ struct MultipleRowCardView: View {
         }
     }
 
-    // MARK: - Monthly → N month bars
+    // MARK: - Monthly → 3 month bars (shows 1 quarter)
 
     private func monthlyBars() -> [BarItem] {
-        let count = settings.numberOfPeriods
+        let count = 3  // Show 3 months = 1 quarter
         return (0..<count).reversed().map { offset in
             let monthDate = Calendar.current.date(byAdding: .month, value: -offset, to: currentDate)!
             let monthStart = self.startOfMonth(for: monthDate)
@@ -90,10 +90,10 @@ struct MultipleRowCardView: View {
         }
     }
 
-    // MARK: - Yearly → N year bars
+    // MARK: - Yearly → 5 year bars
 
     private func yearlyBars() -> [BarItem] {
-        let count = settings.numberOfPeriods
+        let count = 5  // Show 5 years
         return (0..<count).reversed().map { offset in
             let yearDate = Calendar.current.date(byAdding: .year, value: -offset, to: currentDate)!
             let yearStart = self.startOfYear(for: yearDate)

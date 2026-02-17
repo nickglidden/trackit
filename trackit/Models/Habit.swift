@@ -58,6 +58,72 @@ final class Habit {
         
         try? context.save()
     }
+    
+    /// Calculate current streak for daily habits
+    /// For other frequencies, returns the count of consecutive completed periods
+    func calculateStreak(for currentDate: Date = Date()) -> Int {
+        guard frequency == .daily else {
+            // For weekly/monthly/yearly, count consecutive completed periods
+            return consecutiveCompletedPeriods(from: currentDate)
+        }
+        
+        let calendar = Calendar.current
+        var streak = 0
+        var checkDate = calendar.startOfDay(for: currentDate)
+        
+        // Check backwards from today
+        while true {
+            let amount = getCurrentAmount(for: checkDate)
+            if amount >= targetAmount {
+                streak += 1
+                checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
+            } else {
+                break
+            }
+        }
+        
+        return streak
+    }
+    
+    /// Helper: count consecutive completed periods for non-daily habits
+    private func consecutiveCompletedPeriods(from currentDate: Date) -> Int {
+        let calendar = Calendar.current
+        var streak = 0
+        var offset = 0
+        
+        while offset < 365 {
+            let periodDate: Date
+            
+            switch frequency {
+            case .weekly:
+                periodDate = calendar.date(byAdding: .weekOfYear, value: -offset, to: currentDate)!
+            case .monthly:
+                periodDate = calendar.date(byAdding: .month, value: -offset, to: currentDate)!
+            case .yearly:
+                periodDate = calendar.date(byAdding: .year, value: -offset, to: currentDate)!
+            case .daily:
+                periodDate = currentDate // Should not reach here
+            }
+            
+            let amount = getCurrentAmount(for: periodDate)
+            if amount >= targetAmount {
+                streak += 1
+                offset += 1
+            } else {
+                break
+            }
+        }
+        
+        return streak
+    }
+    
+    /// Calculate completion percentage for the current period
+    func completionPercentage(for currentDate: Date = Date()) -> Int {
+        let current = getCurrentAmount(for: currentDate)
+        let target = targetAmount
+        guard target > 0 else { return 0 }
+        return min(100, Int((CGFloat(current) / CGFloat(target)) * 100))
+    }
 
     /// Returns the canonical date used to store/look up entries for this habit.
     /// - Daily: start of that day
