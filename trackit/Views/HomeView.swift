@@ -16,6 +16,8 @@ struct HomeView: View {
     @State private var showingCreateHabit = false
     @State private var editingHabit: Habit?
     @State private var settings: AppSettings?
+    @State private var showingHelp = false
+    @State private var showingOnboarding = false
     
     private var backgroundColor: Color {
         Theme.from(string: resolvedSettings.theme).backgroundColor
@@ -70,12 +72,12 @@ struct HomeView: View {
                             
                             // MARK: - Version Info (Empty State)
                             VStack(spacing: 4) {
-                                Text("TrackIt!")
+                                Text("TrackIt")
                                     .font(AppFont.from(string: resolvedSettings.fontName).font(size: 14))
                                     .fontWeight(.semibold)
                                     .foregroundColor(.white.opacity(0.6))
                                 
-                                Text(resolvedSettings.appVersion)
+                                Text("v\(resolvedSettings.appVersion) (Build \(resolvedSettings.buildNumber))")
                                     .font(AppFont.from(string: resolvedSettings.fontName).font(size: 12))
                                     .foregroundColor(.white.opacity(0.4))
                             }
@@ -111,6 +113,16 @@ struct HomeView: View {
             .navigationTitle("TrackIt!")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        showingHelp = true
+                    }) {
+                        Image(systemName: "questionmark.circle")
+                            .font(.system(size: 20))
+                            .foregroundColor(.primary)
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SettingsView(settings: resolvedSettings)) {
                         Image(systemName: "gear")
@@ -125,9 +137,22 @@ struct HomeView: View {
                 CreateHabitView(habitToEdit: habit, settings: resolvedSettings)
                     .id(habit.id)
             }
+            .sheet(isPresented: $showingHelp) {
+                OnboardingView(settings: resolvedSettings, showDismissButton: true, startAtDocumentation: true)
+            }
+            .fullScreenCover(isPresented: $showingOnboarding) {
+                OnboardingView(settings: resolvedSettings, showDismissButton: false, startAtDocumentation: false)
+            }
             .task {
                 ensureSettingsExists()
                 normalizeHabitSortOrderIfNeeded()
+                
+                // Show onboarding on first launch
+                if !resolvedSettings.hasCompletedOnboarding {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        showingOnboarding = true
+                    }
+                }
             }
         }
     }

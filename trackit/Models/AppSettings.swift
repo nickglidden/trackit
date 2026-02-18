@@ -22,6 +22,9 @@ final class AppSettings {
     // Privacy & Security
     var appLockEnabled: Bool
     
+    // Onboarding
+    var hasCompletedOnboarding: Bool
+    
     init(theme: String = "frostbiteBlue",
          fontName: String = "Courier",
          roundCorners: Bool = true,
@@ -30,7 +33,8 @@ final class AppSettings {
          showStreaks: Bool = true,
          showCompletionPercentage: Bool = true,
          reduceAnimations: Bool = false,
-         appLockEnabled: Bool = false) {
+         appLockEnabled: Bool = false,
+         hasCompletedOnboarding: Bool = false) {
         self.theme = theme
         self.fontName = fontName
         self.roundCorners = roundCorners
@@ -40,6 +44,7 @@ final class AppSettings {
         self.showCompletionPercentage = showCompletionPercentage
         self.reduceAnimations = reduceAnimations
         self.appLockEnabled = appLockEnabled
+        self.hasCompletedOnboarding = hasCompletedOnboarding
     }
     
     /// Gets the app version from the bundle
